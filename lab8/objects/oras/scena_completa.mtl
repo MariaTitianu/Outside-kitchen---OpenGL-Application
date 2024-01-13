@@ -1,0 +1,377 @@
+# Blender 4.0.2 MTL File: 'scena completa.blend'
+# www.blender.org
+
+newmtl Ground
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_3 - Copy.png
+
+newmtl Ground.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_3.png
+
+newmtl MAIN
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_1.png
+
+newmtl MI_SBDream_KrabbyPatty_01.003
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.004
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.005
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.006
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.007
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.009
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.010
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.011
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.012
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.013
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.014
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.015
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.016
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.017
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.019
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.020
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.021
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.jpg
+map_Bump -bm 1.000000 textures/patty/Image_1.png
+
+newmtl MI_SBDream_KrabbyPatty_01.022
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.jpg
+map_Bump -bm 1.000000 textures/patty/Image_1.png
+
+newmtl MI_SBDream_KrabbyPatty_01.023
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.jpg
+map_Bump -bm 1.000000 textures/patty/Image_1.png
+
+newmtl MI_SBDream_KrabbyPatty_01.024
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.jpg
+map_Bump -bm 1.000000 textures/patty/Image_1.png
+
+newmtl MI_SBDream_KrabbyPatty_01.025
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.026
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.027
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.028
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl MI_SBDream_KrabbyPatty_01.029
+Ns 37.500000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/patty/Image_0.002.png
+
+newmtl Material.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/trambulina/texture.png
+
+newmtl Material_182
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/masa/Image_0.png
+
+newmtl Material_184
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/masa/Image_2.png
+
+newmtl MossNRock.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_4.png
+
+newmtl ROOFM
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_2.png
+
+newmtl Window
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Window.png
+
+newmtl _HSM0001_BBQ04___Default
+Ns 10.000005
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd textures/grill/HSM0001_BBQ.jpg
+
+newmtl lambert2
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd textures/market_table/Image_0.jpg
+map_Bump -bm 1.000000 textures/market_table/Image_2.png
+
+newmtl material
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/oras/Image_0.png
