@@ -37,6 +37,8 @@ using namespace std::chrono;
 gps::Model3D oras;
 gps::Model3D geamuri;
 gps::Model3D lampite;
+gps::Model3D sticla,sticla1, sticla2;
+gps::Model3D doza, doza1, doza2;
 
 enum CameraMode {
 	FREE,
@@ -429,18 +431,27 @@ void initOpenGLState()
 	glViewport(0, 0, retina_width, retina_height);
 
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
-	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+	glDepthFunc(GL_LESS); // depth-testing interprets a smaller valu e as "closer"
 	glEnable(GL_CULL_FACE); // cull face
 	glCullFace(GL_BACK); // cull back face
 	glFrontFace(GL_CCW); // GL_CCW for counter clock-wise
 
 	glEnable(GL_FRAMEBUFFER_SRGB);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void initObjects() {
-	oras.LoadModel("objects/oras/scena_completa.obj");
-	geamuri.LoadModel("objects/oras/geamuri.obj");
-	lampite.LoadModel("objects/oras/lampite.obj");
+	oras.LoadModel("objects/scena_completa.obj");
+	geamuri.LoadModel("objects/geamuri.obj");
+	lampite.LoadModel("objects/lampite.obj");
+	sticla.LoadModel("objects/sticla.obj");
+	sticla1.LoadModel("objects/sticla1.obj");
+	sticla2.LoadModel("objects/sticla2.obj");
+	doza.LoadModel("objects/doza.obj");
+	doza1.LoadModel("objects/doza1.obj");
+	doza2.LoadModel("objects/doza_indoita.obj");
 	skybox.Load(faces);
 }
 
@@ -505,8 +516,27 @@ void initUniforms() {
 	fog = 0;
 	fogLoc = glGetUniformLocation(myCustomShader.shaderProgram, "enableFog");
 	glUniform1i(fogLoc, fog);
+	//alpha
+	alpha = 1.0f;
+	alphaLoc = glGetUniformLocation(myCustomShader.shaderProgram, "alpha");
+	glUniform1f(alphaLoc, alpha);
 }
 
+void drawTransparentObjects(gps::Shader shader, bool depthPass) {
+	shader.useShaderProgram();
+
+	model = glm::mat4(1.0f);
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	if (!depthPass) {
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		alpha = 0.7f;
+		glUniform1f(alphaLoc, alpha);
+	}
+	sticla.Draw(shader);
+	sticla1.Draw(shader);
+	sticla2.Draw(shader);
+}
 void drawObjects(gps::Shader shader, bool depthPass) {
 	shader.useShaderProgram();
 	if (!depthPass) {
@@ -515,9 +545,12 @@ void drawObjects(gps::Shader shader, bool depthPass) {
 		glUniform1i(flatLoc, flat);
 		glUniform1f(sunlightStrengthLoc, sunlightStrength);
 		glUniform1i(fogLoc, fog);
+		alpha = 1.0f;
+		glUniform1f(alphaLoc, alpha);
 	}
 
 	oras.Draw(shader);
+
 
 	if (geamurilights_on && !depthPass) {
 		glUniform3fv(ambientColorLoc,1,  glm::value_ptr(ambientColorWindow));
@@ -627,7 +660,7 @@ void renderScene() {
 	drawLights(myCustomShader);
 	drawSkybox();
 	drawObjects(myCustomShader, false);
-	
+	drawTransparentObjects(myCustomShader, false);
 
 }
 
