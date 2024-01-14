@@ -125,10 +125,23 @@ GLuint lightFOVLoc;
 GLuint lightStrengthLoc;
 
 bool e_pressed_last = false;
-bool l_pressed_last = false;
-bool k_pressed_last = false;
+bool l_pressed_last = false, q_pressed_last = false;
+bool k_pressed_last = false, f_pressed_last = false;
 bool geamurilights_on = false;
-bool luminitelights_on = false, q_pressed_last = false;
+bool luminitelights_on = false;
+
+//flat
+int flat;
+GLuint flatLoc;
+
+//fog
+int fog;
+GLuint fogLoc;
+
+//transparency
+GLfloat alpha;
+GLuint alphaLoc;
+
 
 gps::Camera myCamera(glm::vec3(41.061756f, 26.729397f, 24.829081f), glm::vec3(40.436047f, 26.138233f, 24.320145f), glm::vec3(-0.458614f, 0.806552f, -0.373024f), true);
 
@@ -136,9 +149,8 @@ bool pressedKeys[1024];
 float angleY = 0.0f;
 
 gps::Shader myCustomShader;
-
-gps::SkyBox skybox;
 gps::Shader skyboxShader;
+gps::SkyBox skybox;
 
 std::vector<const GLchar*> faces{
 	"skybox/px.jpg"
@@ -212,6 +224,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 void processMovement()
 {
+	
 	//camera movement
 	if (cameraStatus == FREE && 
 		(pressedKeys[GLFW_KEY_W] || pressedKeys[GLFW_KEY_S] || pressedKeys[GLFW_KEY_A] || pressedKeys[GLFW_KEY_D]) || pressedKeys[GLFW_KEY_LEFT_SHIFT] || pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
@@ -239,6 +252,7 @@ void processMovement()
 	else {
 		cameraSpeed = 0.0f;
 	}
+	
 	if (pressedKeys[GLFW_KEY_0]) {
 		if (cameraStatus != PRESENTATION) {
 			animation_initial_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
@@ -260,6 +274,7 @@ void processMovement()
 			cameraStatus = PRESENTATION;
 		}
 	}
+	
 	if (pressedKeys[GLFW_KEY_1]) {
 		if (cameraStatus != FREE) {
 			cameraStatus = FREE;
@@ -278,10 +293,25 @@ void processMovement()
 		}
 		k_pressed_last = pressedKeys[GLFW_KEY_K];
 	}
+	
 	//sunlight rotation
 	if (pressedKeys[GLFW_KEY_R]) {
 		sunlightAngle += 0.1f;
 	}
+	
+	//fog
+	if (pressedKeys[GLFW_KEY_F] != f_pressed_last) {
+		if (pressedKeys[GLFW_KEY_F]) {
+			if (fog == 0) {
+				fog = 1;
+			}
+			else {
+				fog = 0;
+			}
+		}
+		f_pressed_last = pressedKeys[GLFW_KEY_F];
+	}
+	
 	//sunlight or moonlight
 	if (pressedKeys[GLFW_KEY_E] != e_pressed_last) {
 		if (pressedKeys[GLFW_KEY_E]) {
@@ -296,7 +326,25 @@ void processMovement()
 		}
 		e_pressed_last = pressedKeys[GLFW_KEY_E];
 	}
-
+	if (pressedKeys[GLFW_KEY_F1]) { //solid
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	if (pressedKeys[GLFW_KEY_F2]) { //wireframe
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	if (pressedKeys[GLFW_KEY_F3]) { //point
+		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	}
+	if (pressedKeys[GLFW_KEY_F4]) { //flat
+		flat = 2;
+	}
+	if (pressedKeys[GLFW_KEY_F5]) { //normals flat
+		flat = 1;
+	}
+	if (pressedKeys[GLFW_KEY_F6]) { //smooth
+		flat = 0;
+	}
+	
 	//display current camera position
 	if (pressedKeys[GLFW_KEY_Q] != q_pressed_last) {
 		if (pressedKeys[GLFW_KEY_Q]) {
@@ -393,7 +441,6 @@ void initObjects() {
 	oras.LoadModel("objects/oras/scena_completa.obj");
 	geamuri.LoadModel("objects/oras/geamuri.obj");
 	lampite.LoadModel("objects/oras/lampite.obj");
-
 	skybox.Load(faces);
 }
 
@@ -401,7 +448,6 @@ void initObjects() {
 void initShaders() {
 	myCustomShader.loadShader("shaders/shaderStart.vert", "shaders/shaderStart.frag");
 	myCustomShader.useShaderProgram();
-
 	skyboxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
 	skyboxShader.useShaderProgram();
 }
@@ -442,6 +488,10 @@ void initUniforms() {
 	ambientColorLoc = glGetUniformLocation(myCustomShader.shaderProgram, "ambientColor");
 	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(ambientColorDisabled));
 	
+	//flat
+	flat = 0;
+	flatLoc = glGetUniformLocation(myCustomShader.shaderProgram, "flatness");
+	glUniform1i(flatLoc, flat);
 	//set sunlight strength
 	sunlightStrength = sunlightStrengthSun;
 	sunlightStrengthLoc = glGetUniformLocation(myCustomShader.shaderProgram, "sunlightStrength");
@@ -451,12 +501,21 @@ void initUniforms() {
 	skyboxBoost = skyboxBoostSun;
 	skyboxBoostLoc = glGetUniformLocation(skyboxShader.shaderProgram, "boost");
 	glUniform1f(skyboxBoostLoc, skyboxBoost);
+	//fog
+	fog = 0;
+	fogLoc = glGetUniformLocation(myCustomShader.shaderProgram, "enableFog");
+	glUniform1i(fogLoc, fog);
 }
 
 void drawObjects(gps::Shader shader, bool depthPass) {
 	shader.useShaderProgram();
-
-	glUniform1f(sunlightStrengthLoc, sunlightStrength);
+	if (!depthPass) {
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniform1i(flatLoc, flat);
+		glUniform1f(sunlightStrengthLoc, sunlightStrength);
+		glUniform1i(fogLoc, fog);
+	}
 
 	oras.Draw(shader);
 
@@ -539,17 +598,12 @@ void drawLights(gps::Shader shader) {
 void renderScene() {
 
 	myCustomShader.useShaderProgram();
-	glCheckError();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glCheckError();
 	view = myCamera.getViewMatrix();
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glCheckError();
 	model = glm::mat4(1.0f);
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-	glCheckError();
 	normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
-	glCheckError();
 	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 	//calculateAnimations();
 	switch (cameraStatus) {
@@ -568,10 +622,8 @@ void renderScene() {
 	case FREE: break;
 	}
 //lumina
-	glCheckError();
 	sunlightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(sunlightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	glUniform3fv(sunlightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * sunlightRotation)) * sunlightDir));
-	glCheckError();
 	drawLights(myCustomShader);
 	drawSkybox();
 	drawObjects(myCustomShader, false);
@@ -589,19 +641,14 @@ void cleanup() {
 }
 
 int main(int argc, const char * argv[]) {
-	
 	if (!initOpenGLWindow()) {
 		glfwTerminate();
 		return 1;
 	}
 	current_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-	glCheckError();	
 	initOpenGLState();
-	glCheckError();
 	initObjects();
-	glCheckError();
 	initShaders();
-	glCheckError();
 	initUniforms();
 
 	while (!glfwWindowShouldClose(glWindow)) {
@@ -612,14 +659,12 @@ int main(int argc, const char * argv[]) {
 		}
 		processMovement();
 		renderScene();
-		glCheckError();
 		glfwPollEvents();
-		glCheckError();
 		glfwSwapBuffers(glWindow);
-		glCheckError();
 	}
 
 	cleanup();
+
 
 	return 0;
 }

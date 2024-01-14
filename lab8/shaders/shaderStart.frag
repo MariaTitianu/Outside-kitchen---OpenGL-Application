@@ -38,6 +38,9 @@ uniform float alpha;
 //flat 
 uniform int flatness;
 
+//fog
+uniform int enableFog;
+float fogDensity = 0.05f;
 
 vec3 ambient;
 vec3 diffuse;
@@ -45,6 +48,12 @@ vec3 specular;
 float specularStrength = 0.5f;
 float shininess = 32.0f;
 float shadow;
+
+float constant = 1.0f;
+float linear = 0.0045f;
+float quadratic = 0.0075f;
+
+
 
 
 void computeLightComponents(vec3 fragment_normal, vec4 fragment_position_eye, vec4 fragment_position) //TODO unifica functiile
@@ -79,8 +88,7 @@ void computeLightComponents(vec3 fragment_normal, vec4 fragment_position_eye, ve
 			//compute distance to light
 			float dist = length(lightPosition[i] - fragment_position.xyz);
 
-			float att = 1.0f;
-
+			float att = 1.0f / (constant + linear * dist + quadratic * (dist * dist));
 
 			float angleToDirection = acos(dot(normalize(lightPosition[i] - fragment_position.xyz), lightDirection[i]));
 			if(angleToDirection <= radians(lightFOV[i] / 2.0f)){
@@ -99,6 +107,12 @@ void computeLightComponents(vec3 fragment_normal, vec4 fragment_position_eye, ve
 	}
 }
 
+float computeFog()
+{
+	float fragmentDistance = length(fPosEye);
+	float fogFactor = exp(-pow(fragmentDistance * fogDensity, 2));
+	return clamp(fogFactor, 0.0f, 1.0f);
+}
 
 void main() 
 {
@@ -135,6 +149,14 @@ void main()
     
 	vec4 color4 = vec4(color, alpha);
 	
-	fColor = color4;
+	if(enableFog == 1){
+		float fogFactor = computeFog();
+		vec4 fogColor = vec4(0.584f, 0.584f, 0.584f, 1.0f);
+
+		fColor = mix(fogColor, color4, fogFactor);
+	}
+	else{
+		fColor = color4;
+	}
 	
 }
