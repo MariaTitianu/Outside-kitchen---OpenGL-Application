@@ -144,6 +144,13 @@ GLuint fogLoc;
 GLfloat alpha;
 GLuint alphaLoc;
 
+//reflexie
+GLuint viewLocReflection;
+GLuint projectionLocReflection;
+GLuint normalMatrixLocReflection;
+GLuint alphaLocReflection;
+GLuint fogLocReflection;
+GLuint modelLocReflection;
 
 gps::Camera myCamera(glm::vec3(41.061756f, 26.729397f, 24.829081f), glm::vec3(40.436047f, 26.138233f, 24.320145f), glm::vec3(-0.458614f, 0.806552f, -0.373024f), true);
 
@@ -151,6 +158,7 @@ bool pressedKeys[1024];
 float angleY = 0.0f;
 
 gps::Shader myCustomShader;
+gps::Shader reflectionShader;
 gps::Shader skyboxShader;
 gps::SkyBox skybox;
 
@@ -461,6 +469,9 @@ void initShaders() {
 	myCustomShader.useShaderProgram();
 	skyboxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
 	skyboxShader.useShaderProgram();
+	reflectionShader.loadShader("shaders/reflectionShader.vert", "shaders/reflectionShader.frag");
+	reflectionShader.useShaderProgram();
+
 }
 
 void initUniforms() {
@@ -507,6 +518,21 @@ void initUniforms() {
 	sunlightStrength = sunlightStrengthSun;
 	sunlightStrengthLoc = glGetUniformLocation(myCustomShader.shaderProgram, "sunlightStrength");
 	glUniform1f(sunlightStrengthLoc, sunlightStrength);
+
+	//reflection
+	reflectionShader.useShaderProgram();
+	modelLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "model");
+	glUniformMatrix4fv(modelLocReflection, 1, GL_FALSE, glm::value_ptr(model));
+	viewLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "view");
+	glUniformMatrix4fv(viewLocReflection, 1, GL_FALSE, glm::value_ptr(view));
+	projectionLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "projection");
+	glUniformMatrix4fv(projectionLocReflection, 1, GL_FALSE, glm::value_ptr(projection));
+	normalMatrixLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "normalMatrix");
+	glUniformMatrix3fv(normalMatrixLocReflection, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	alphaLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "alpha");
+	glUniform1f(alphaLocReflection, alpha);
+	fogLocReflection = glGetUniformLocation(reflectionShader.shaderProgram, "enableFog");
+	glUniform1i(fogLocReflection, fog);
 	//skybox
 	skyboxShader.useShaderProgram();
 	skyboxBoost = skyboxBoostSun;
@@ -520,6 +546,24 @@ void initUniforms() {
 	alpha = 1.0f;
 	alphaLoc = glGetUniformLocation(myCustomShader.shaderProgram, "alpha");
 	glUniform1f(alphaLoc, alpha);
+}
+void drawReflectiveObjects(gps::Shader shader, bool depthPass) {
+	shader.useShaderProgram();
+	model = glm::mat4(1.0f);
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	// do not send the normal matrix if we are rendering in the depth map
+	if (!depthPass) {
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLocReflection, 1, GL_FALSE, glm::value_ptr(view));
+		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
+		glUniformMatrix3fv(normalMatrixLocReflection, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+		alpha = 1.0f;
+		glUniform1f(alphaLocReflection, alpha);
+		glUniform1i(fogLocReflection, fog);
+	}
+	doza.Draw(shader);
+	doza1.Draw(shader);
+	doza2.Draw(shader);
 }
 
 void drawTransparentObjects(gps::Shader shader, bool depthPass) {
@@ -658,6 +702,7 @@ void renderScene() {
 	sunlightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(sunlightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	glUniform3fv(sunlightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * sunlightRotation)) * sunlightDir));
 	drawLights(myCustomShader);
+	drawReflectiveObjects(reflectionShader, false);
 	drawSkybox();
 	drawObjects(myCustomShader, false);
 	drawTransparentObjects(myCustomShader, false);
