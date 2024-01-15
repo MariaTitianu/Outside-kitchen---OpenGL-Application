@@ -82,5 +82,23 @@
     <None Include="shaders\skyboxShader.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="shaders\depthShader.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\depthShader.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\reflectionShader.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\reflectionShader.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\screenQuad.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\screenQuad.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

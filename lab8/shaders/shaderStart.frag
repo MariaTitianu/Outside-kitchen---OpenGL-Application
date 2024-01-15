@@ -5,11 +5,13 @@ in vec3 fNormalEye;
 in vec4 fPos;
 in vec4 fPosEye;
 in vec2 fTexCoords;
+in vec4 fragPosLightSpace;
 
 flat in vec4 flat_fPos;
 flat in vec3 flat_fNormalEye;
 flat in vec4 flat_fPosEye;
 flat in vec2 flat_fTexCoords;
+flat in vec4 flat_fragPosLightSpace;
 
 out vec4 fColor;
 
@@ -52,9 +54,6 @@ float shadow;
 float constant = 1.0f;
 float linear = 0.0045f;
 float quadratic = 0.0075f;
-
-
-
 
 void computeLightComponents(vec3 fragment_normal, vec4 fragment_position_eye, vec4 fragment_position) //TODO unifica functiile
 {		
@@ -107,6 +106,29 @@ void computeLightComponents(vec3 fragment_normal, vec4 fragment_position_eye, ve
 	}
 }
 
+float computeShadow(){
+	// perform perspective divide
+	vec3 normalizedCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+	// Transform to [0,1] range
+	normalizedCoords = normalizedCoords * 0.5 + 0.5;
+
+	// Check if not outside
+	if (normalizedCoords.z > 1.0f)
+		return 0.0f;
+
+	// Get closest depth value from light's perspective
+	float closestDepth = texture(shadowMap, normalizedCoords.xy).r;
+
+	// Get depth of current fragment from light's perspective
+	float currentDepth = normalizedCoords.z;
+
+	// Check whether current frag pos is in shadow
+	float bias = max(0.05f * (1.0f - dot(fNormalEye, sunlightDir)), 0.005f);
+	float shadow = currentDepth - bias > closestDepth ? 1.0f : 0.0f;
+	return shadow;
+}
+
 float computeFog()
 {
 	float fragmentDistance = length(fPosEye);
@@ -143,9 +165,8 @@ void main()
 		diffuse *= texture(diffuseTexture, fTexCoords).rgb;
 		specular *= texture(specularTexture, fTexCoords).rgb;
 	}
-
+	shadow = computeShadow();
 	vec3 color = min((ambient + (1.0f - shadow)*diffuse) + (1.0f - shadow)*specular, 1.0f);
-	//vec3 color = min((ambient + diffuse) + specular, 1.0f);
     
 	vec4 color4 = vec4(color, alpha);
 	

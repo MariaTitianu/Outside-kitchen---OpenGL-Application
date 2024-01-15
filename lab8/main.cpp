@@ -14,7 +14,7 @@
 	#include <GL/glew.h>
 #endif
 
-#define lightNum 4
+
 
 #include <GLFW/glfw3.h>
 
@@ -34,17 +34,57 @@
 
 using namespace std::chrono;
 
+#define lightNum 4
+
+const unsigned int SHADOW_WIDTH = 32768;
+const unsigned int SHADOW_HEIGHT = 32768;
+
+GLuint shadowMapFBO;
+GLuint depthMapTexture;
+bool showDepthMap;
+
 gps::Model3D oras;
 gps::Model3D geamuri;
 gps::Model3D lampite;
 gps::Model3D sticla,sticla1, sticla2;
 gps::Model3D doza, doza1, doza2;
+gps::Model3D screenQuad;
+gps::Model3D chifla,top_chifla, tomato, patty, cheese, salad;
 
 enum CameraMode {
 	FREE,
 	PRESENTATION
 };
 CameraMode cameraStatus = FREE;
+
+enum AnimationStatus {
+	STOPPED,
+	INITIALISING,
+	RUNNING
+};
+AnimationStatus animationStatus = STOPPED;
+milliseconds animationInitialTime;
+int animationKeyframeIndex;
+std::vector<gps::Keyframe> animationKeyframeVector{
+	gps::Keyframe(glm::vec3(11.1969f, 1.12427f, -1.32859f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.999f, 0.682508f, -1.19389f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 2000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.999f, 0.682508f, -1.19389f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.999f, 1.0f, -1.19389f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3500ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.999f, 0.682508f, -1.19389f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 4000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.999f, 0.682508f, -1.19389f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 5000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(12.7363f, 1.50028f, -0.842085f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 6000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(14.0284f, 1.50028f, -0.276667f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 7000ms, gps::Keyframe::ANGULAR)
+};
+float halfHeight;
+bool firstIngredient = true;
+gps::Model3D chosenIngredient;
+
+gps::Keyframe chiflaInitialKeyframe(glm::vec3(10.2196f, 0.56819f, -1.32859f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float chiflaHalfHeight = 0.0266f;
+
+gps::Keyframe targetKeyframe(glm::vec3(14.0284f, 0.825997f, -0.276667f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 8000ms, gps::Keyframe::ANGULAR);
+
+std::vector<std::pair<gps::Keyframe, gps::Model3D>> objectPersistanceVector;
 
 float last_xpos, last_ypos;
 const float PITCH_MULT = 0.0025, YAW_MULT = 0.0025;
@@ -58,6 +98,9 @@ float cameraAcceleration = 0.0002f;
 milliseconds last_time;
 milliseconds current_time;
 milliseconds animation_initial_time, animationLengthFromPosition= 1000ms;
+milliseconds animation_initial_time_aliment, animationLength_aliment = 1000ms;
+milliseconds last_time_aliment;
+milliseconds current_time_aliment;
 
 std::vector<gps::Keyframe> keyframe_vector{
 	gps::Keyframe(glm::vec3(0.325578f, 1.409597f, 0.221673f), glm::vec3(1.325069f, 1.429595f, 0.246563f), glm::vec3(-0.019992f, 0.999800f, -0.000498f), 0ms, gps::Keyframe::ANGULAR)
@@ -73,15 +116,16 @@ std::vector<gps::Keyframe> keyframe_vector{
 	,gps::Keyframe(glm::vec3(-1.410410f, 1.367754f, -1.990653f), glm::vec3(-2.399813f, 1.345255f, -2.134094f), glm::vec3(-0.022266f, 0.999747f, -0.003228f), 25000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(-7.185678f, 1.670901f, 0.191114f), glm::vec3(-8.118288f, 1.571068f, 0.537916f), glm::vec3(-0.093573f, 0.995004f, 0.034796f), 27000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(-5.620029f, 1.818617f, 1.830073f), glm::vec3(-4.661648f, 1.681549f, 2.080506f), glm::vec3 (0.132615f, 0.990562f, 0.034653f), 29000ms, gps::Keyframe::ANGULAR)
-	,gps::Keyframe(glm::vec3(0.325578f, 1.409597f, 0.221673f), glm::vec3(1.325069f, 1.429595f, 0.246563f), glm::vec3(-0.019992f, 0.999800f, -0.000498f), 31000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(0.358665f, 1.482273f, 3.800300f), glm::vec3(1.291042f, 1.491704f, 3.438936f), glm::vec3(-0.000000f, 1.000000f, 0.000000f), 31000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(0.325578f, 1.409597f, 0.221673f), glm::vec3(1.325069f, 1.429595f, 0.246563f), glm::vec3(-0.019992f, 0.999800f, -0.000498f), 33000ms, gps::Keyframe::ANGULAR)
 };
 int keyframe_index;
 bool replace_start_frame = false;
 
 bool debug_mode = false;
 
-int glWindowWidth = 800;
-int glWindowHeight = 600;
+int glWindowWidth = 1600;
+int glWindowHeight = 900;
 int retina_width, retina_height;
 GLFWwindow* glWindow = NULL;
 
@@ -93,7 +137,6 @@ glm::mat4 projection;
 GLuint projectionLoc;
 glm::mat3 normalMatrix;
 GLuint normalMatrixLoc;
-
 //lumina
 
 GLuint sunlightStrengthLoc;
@@ -103,7 +146,7 @@ GLfloat sunlightStrengthSun = 1.0f;
 
 GLfloat sunlightAngle;
 glm::mat4 sunlightRotation;
-glm::vec3 sunlightDir = glm::vec3(-12.5f, 50.0f, -50.0f);
+glm::vec3 sunlightDir = glm::vec3(95.935310f, 237.573547f, 189.779480f);
 GLuint sunlightDirLoc;
 glm::vec3 sunlightColor;
 GLuint sunlightColorLoc;
@@ -126,7 +169,8 @@ GLuint lightDirectionLoc;
 GLuint lightFOVLoc;
 GLuint lightStrengthLoc;
 
-bool e_pressed_last = false;
+bool m_pressed_last = false;
+bool e_pressed_last = false, h_pressed_last = false;
 bool l_pressed_last = false, q_pressed_last = false;
 bool k_pressed_last = false, f_pressed_last = false;
 bool geamurilights_on = false;
@@ -160,6 +204,9 @@ float angleY = 0.0f;
 gps::Shader myCustomShader;
 gps::Shader reflectionShader;
 gps::Shader skyboxShader;
+gps::Shader depthShader;
+gps::Shader screenQuadShader;
+
 gps::SkyBox skybox;
 
 std::vector<const GLchar*> faces{
@@ -239,7 +286,7 @@ void processMovement()
 	if (cameraStatus == FREE && 
 		(pressedKeys[GLFW_KEY_W] || pressedKeys[GLFW_KEY_S] || pressedKeys[GLFW_KEY_A] || pressedKeys[GLFW_KEY_D]) || pressedKeys[GLFW_KEY_LEFT_SHIFT] || pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
 		cameraSpeed = cameraSpeed > cameraSpeedMax ? cameraSpeedMax : cameraSpeed + cameraAcceleration * (current_time.count() - last_time.count());
-		printf("Camera speed: %f, time difference: %lld\n", cameraSpeed, (current_time.count() - last_time.count()));
+		//printf("Camera speed: %f, time difference: %lld\n", cameraSpeed, (current_time.count() - last_time.count()));
 		if (pressedKeys[GLFW_KEY_W] && cameraStatus == FREE) {
 			myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
 		}
@@ -285,7 +332,7 @@ void processMovement()
 		}
 	}
 	
-	if (pressedKeys[GLFW_KEY_1]) {
+	if (pressedKeys[GLFW_KEY_9]) {
 		if (cameraStatus != FREE) {
 			cameraStatus = FREE;
 		}
@@ -354,6 +401,20 @@ void processMovement()
 	if (pressedKeys[GLFW_KEY_F6]) { //smooth
 		flat = 0;
 	}
+
+	if (pressedKeys[GLFW_KEY_M] != m_pressed_last) {
+		if (pressedKeys[GLFW_KEY_M]) {
+			showDepthMap = !showDepthMap;
+		}
+		m_pressed_last = pressedKeys[GLFW_KEY_M];
+	}
+	if (pressedKeys[GLFW_KEY_1] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), chiflaInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = chifla;
+	}
 	
 	//display current camera position
 	if (pressedKeys[GLFW_KEY_Q] != q_pressed_last) {
@@ -366,12 +427,37 @@ void processMovement()
 		q_pressed_last = pressedKeys[GLFW_KEY_Q];
 	}
 }
+
+void initFBO() {
+	//TODO - Create the FBO, the depth texture and attach the depth texture to the FBO
+	//generate FBO ID
+	glGenFramebuffers(1, &shadowMapFBO);
+	//create depth texture for FBO
+	glGenTextures(1, &depthMapTexture);
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	//attach texture to FBO
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTexture,
+		0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void drawSkybox() {
 	skyboxShader.useShaderProgram();
 	view = myCamera.getViewMatrix();
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader.shaderProgram, "view"), 1, GL_FALSE,
 		glm::value_ptr(view));
-	projection = glm::perspective(glm::radians(45.0f), (float)retina_width / (float)retina_height, 0.1f, 1000.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)retina_width / (float)retina_height, 0.1f, 2000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader.shaderProgram, "projection"), 1, GL_FALSE,
 		glm::value_ptr(projection));
 	glUniform1f(skyboxBoostLoc, skyboxBoost);
@@ -460,6 +546,13 @@ void initObjects() {
 	doza.LoadModel("objects/doza.obj");
 	doza1.LoadModel("objects/doza1.obj");
 	doza2.LoadModel("objects/doza_indoita.obj");
+	screenQuad.LoadModel("objects/quad/quad.obj");
+	chifla.LoadModel("objects/bottom_bun.obj");
+	cheese.LoadModel("objects/cheese.obj");
+	patty.LoadModel("objects/patty.obj");
+	salad.LoadModel("objects/salad.obj");
+	tomato.LoadModel("objects/tomato.obj");
+	top_chifla.LoadModel("objects/top_bun.obj");
 	skybox.Load(faces);
 }
 
@@ -467,8 +560,12 @@ void initObjects() {
 void initShaders() {
 	myCustomShader.loadShader("shaders/shaderStart.vert", "shaders/shaderStart.frag");
 	myCustomShader.useShaderProgram();
+	screenQuadShader.loadShader("shaders/screenQuad.vert", "shaders/screenQuad.frag");
+	screenQuadShader.useShaderProgram();
 	skyboxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag");
 	skyboxShader.useShaderProgram();
+	depthShader.loadShader("shaders/depthShader.vert", "shaders/depthShaders.frag");
+	depthShader.useShaderProgram();
 	reflectionShader.loadShader("shaders/reflectionShader.vert", "shaders/reflectionShader.frag");
 	reflectionShader.useShaderProgram();
 
@@ -509,15 +606,26 @@ void initUniforms() {
 
 	ambientColorLoc = glGetUniformLocation(myCustomShader.shaderProgram, "ambientColor");
 	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(ambientColorDisabled));
+
+	//set sunlight strength
+	sunlightStrength = sunlightStrengthSun;
+	sunlightStrengthLoc = glGetUniformLocation(myCustomShader.shaderProgram, "sunlightStrength");
+	glUniform1f(sunlightStrengthLoc, sunlightStrength);
 	
 	//flat
 	flat = 0;
 	flatLoc = glGetUniformLocation(myCustomShader.shaderProgram, "flatness");
 	glUniform1i(flatLoc, flat);
-	//set sunlight strength
-	sunlightStrength = sunlightStrengthSun;
-	sunlightStrengthLoc = glGetUniformLocation(myCustomShader.shaderProgram, "sunlightStrength");
-	glUniform1f(sunlightStrengthLoc, sunlightStrength);
+
+	//fog
+	fog = 0;
+	fogLoc = glGetUniformLocation(myCustomShader.shaderProgram, "enableFog");
+	glUniform1i(fogLoc, fog);
+
+	//alpha
+	alpha = 1.0f;
+	alphaLoc = glGetUniformLocation(myCustomShader.shaderProgram, "alpha");
+	glUniform1f(alphaLoc, alpha);
 
 	//reflection
 	reflectionShader.useShaderProgram();
@@ -538,14 +646,6 @@ void initUniforms() {
 	skyboxBoost = skyboxBoostSun;
 	skyboxBoostLoc = glGetUniformLocation(skyboxShader.shaderProgram, "boost");
 	glUniform1f(skyboxBoostLoc, skyboxBoost);
-	//fog
-	fog = 0;
-	fogLoc = glGetUniformLocation(myCustomShader.shaderProgram, "enableFog");
-	glUniform1i(fogLoc, fog);
-	//alpha
-	alpha = 1.0f;
-	alphaLoc = glGetUniformLocation(myCustomShader.shaderProgram, "alpha");
-	glUniform1f(alphaLoc, alpha);
 }
 void drawReflectiveObjects(gps::Shader shader, bool depthPass) {
 	shader.useShaderProgram();
@@ -617,10 +717,52 @@ void drawObjects(gps::Shader shader, bool depthPass) {
 	else {
 		lampite.Draw(shader);
 	}
+
+	glCheckError();
+
+	chifla.Draw(shader);
+
+	glCheckError();
+
+	//if (!depthPass) {
+	//	for (std::pair<gps::Keyframe, gps::Model3D> object : objectPersistanceVector) {
+	//		glCheckError();
+	//		model = glm::translate(glm::mat4(1.0f), object.first.getPostionVec());
+	//		glCheckError();
+	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	//		glCheckError();
+	//		chifla.Draw(shader);
+	//		glCheckError();
+	//		model = glm::mat4(1.0f);
+	//		glCheckError();
+	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	//		glCheckError();
+	//	}
+	//}
 }
+
+glm::mat4 rotateAroundPoint(glm::mat4 initialMatrix, glm::vec3 point, float angle, glm::vec3 rotationAxis) {
+	glm::mat4 matrix = glm::translate(initialMatrix, point);
+	matrix = glm::rotate(matrix, angle, rotationAxis);
+	matrix = glm::translate(matrix, -point);
+	return matrix;
+}
+
+glm::mat4 rotateAroundPoint(glm::vec3 point, float angle, glm::vec3 rotationAxis) {
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), point);
+	matrix = glm::rotate(matrix, angle, rotationAxis);
+	matrix = glm::translate(matrix, -point);
+	return matrix;
+}
+
+
+
 glm::mat4 computeLightSpaceTrMatrix() {
+	glCheckError();
 	glm::mat4 lightView = glm::lookAt(glm::vec3(sunlightRotation * glm::vec4(sunlightDir, 1.0f)), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 lightProjection = glm::ortho(-700.0f, 700.0f, -700.0f, 700.0f, near_plane, far_plane);
+	glCheckError();
+	glm::mat4 lightProjection = glm::ortho(-2000.0f, 2000.0f, -2000.0f, 2000.0f, near_plane, 2000.0f);
+	glCheckError();
 	return lightProjection * lightView;
 }
 void drawLights(gps::Shader shader) {
@@ -671,48 +813,164 @@ void drawLights(gps::Shader shader) {
 	lightStrengthLoc = glGetUniformLocation(shader.shaderProgram, "lightStrength");
 	glUniform1fv(lightStrengthLoc, lightNum, lightStrength);
 }
+void computeAnimation(gps::Shader shader) {
+	shader.useShaderProgram();
 
-void renderScene() {
-
-	myCustomShader.useShaderProgram();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	view = myCamera.getViewMatrix();
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	model = glm::mat4(1.0f);
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-	normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
-	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-	//calculateAnimations();
-	switch (cameraStatus) {
-	case PRESENTATION:
-		if (keyframe_index == keyframe_vector.size() - 2 && keyframe_vector.at(keyframe_index + 1).getTimestamp() <= current_time - animation_initial_time) {
-			cameraStatus = FREE;
-		}
-		else {
-			if (keyframe_vector.at(keyframe_index + 1).getTimestamp() <= current_time - animation_initial_time) {
-				keyframe_index++;
-			}
-			gps::Keyframe interpolatedKeyframe = keyframe_vector.at(keyframe_index).getInterpolatedKeyframe(keyframe_vector.at(keyframe_index + 1), current_time - animation_initial_time);
-			myCamera = gps::Camera(interpolatedKeyframe.getPostionVec(), interpolatedKeyframe.getTargetVec(), interpolatedKeyframe.getUpVec(), true);
-		}
-		break;
-	case FREE: break;
+	if (animationStatus == INITIALISING) {
+		animationInitialTime = current_time;
+		animationStatus = RUNNING;
 	}
-//lumina
-	sunlightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(sunlightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-	glUniform3fv(sunlightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * sunlightRotation)) * sunlightDir));
-	drawLights(myCustomShader);
-	drawReflectiveObjects(reflectionShader, false);
-	drawSkybox();
-	drawObjects(myCustomShader, false);
-	drawTransparentObjects(myCustomShader, false);
 
+	if (animationKeyframeIndex == animationKeyframeVector.size() - 2 && animationKeyframeVector.at(animationKeyframeIndex + 1).getTimestamp() <= current_time - animationInitialTime) {
+		animationStatus = STOPPED;
+		objectPersistanceVector.push_back(std::pair<gps::Keyframe, gps::Model3D>(animationKeyframeVector.at(animationKeyframeVector.size() - 1), chosenIngredient));
+		animationKeyframeVector.erase(animationKeyframeVector.begin());
+		animationKeyframeVector.erase(animationKeyframeVector.end() - 1);
+	}
+	else {
+		if (animationKeyframeVector.at(animationKeyframeIndex + 1).getTimestamp() <= current_time - animationInitialTime) {
+			animationKeyframeIndex++;
+		}
+		gps::Keyframe interpolatedKeyframe = animationKeyframeVector.at(animationKeyframeIndex).getInterpolatedKeyframe(animationKeyframeVector.at(animationKeyframeIndex + 1), current_time - animationInitialTime);
+		
+		view = myCamera.getViewMatrix();
+		model = glm::translate(glm::mat4(1.0f), interpolatedKeyframe.getPostionVec());
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniform1i(flatLoc, flat);
+		glUniform1f(sunlightStrengthLoc, sunlightStrength);
+		glUniform1i(fogLoc, fog);
+		alpha = 1.0f;
+		glUniform1f(alphaLoc, alpha);
+		chosenIngredient.Draw(shader);
+		model = glm::mat4(1.0f);
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	}
+
+	//	if (current_time_aliment - last_time_aliment > animationLength_aliment) {
+	//		view = myCamera.getViewMatrix();
+	//		model = glm::translate(model, counter_position4chifla + glm::vec3(0.0f, -0.257394f, 0.95001f));
+	//		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	//		glUniform1i(flatLoc, flat);
+	//		glUniform1f(sunlightStrengthLoc, sunlightStrength);
+	//		glUniform1i(fogLoc, fog);
+	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	//		alpha = 1.0f;
+	//		glUniform1f(alphaLoc, alpha);
+	//		chifla.Draw(shader);
+	//	}
+	//	else if (current_time_aliment - last_time_aliment > animationLength_aliment) {
+	//		model = glm::mat4(1.0f);
+	//		last_time = current_time;
+	//		current_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+	//		model = rotateAroundPoint(model, counter_position4chifla + glm::vec3(2.0f, 0.0f, 0.0f), glm::radians(1.25), glm::vec3(0.0f, 1.0f, 0.0f));
+	//		model = glm::translate(model, -counter_position4chifla + glm::vec3(-2.0f, 0.0f, 0.0f));
+	//		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	//		glUniform1i(flatLoc, flat);
+	//		glUniform1f(sunlightStrengthLoc, sunlightStrength);
+	//		glUniform1i(fogLoc, fog);
+	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	//		chifla.Draw(shader);
+	//	}
+	//	model = glm::mat4(1.0f);
+	//	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	//}
+
+}
+void renderScene() {
+	depthShader.useShaderProgram();
+	glCheckError();
+	glUniformMatrix4fv(glGetUniformLocation(depthShader.shaderProgram, "lightSpaceTrMatrix"), 1, GL_FALSE, glm::value_ptr(computeLightSpaceTrMatrix()));
+	glCheckError();
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glCheckError();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	drawObjects(depthShader, true);
+	drawReflectiveObjects(depthShader, true);
+	drawTransparentObjects(depthShader, true);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glCheckError();
+	// render depth map on screen - toggled with the M key
+	if (showDepthMap) {
+		glViewport(0, 0, retina_width, retina_height);
+		glClear(GL_COLOR_BUFFER_BIT);
+		screenQuadShader.useShaderProgram();
+		glCheckError();
+		//bind the depth map
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+		glUniform1i(glGetUniformLocation(screenQuadShader.shaderProgram, "depthMap"), 0);
+		glCheckError();
+		glDisable(GL_DEPTH_TEST);
+		screenQuad.Draw(screenQuadShader);
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		// final scene rendering pass (with shadows)
+		glViewport(0, 0, retina_width, retina_height);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glCheckError();
+		myCustomShader.useShaderProgram();
+
+		sunlightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(sunlightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniform3fv(sunlightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * sunlightRotation)) * sunlightDir));
+		glCheckError();
+		//bind the shadow map
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+		glUniform1i(glGetUniformLocation(myCustomShader.shaderProgram, "shadowMap"), 3);
+		glUniformMatrix4fv(glGetUniformLocation(myCustomShader.shaderProgram, "lightSpaceTrMatrix"),
+			1,
+			GL_FALSE,
+			glm::value_ptr(computeLightSpaceTrMatrix()));
+		myCustomShader.useShaderProgram();
+		glCheckError();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		model = glm::mat4(1.0f);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
+		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+		glCheckError();
+		if(animationStatus != STOPPED){
+			computeAnimation(myCustomShader);
+		}
+		
+		switch (cameraStatus) {
+		case PRESENTATION:
+			if (keyframe_index == keyframe_vector.size() - 2 && keyframe_vector.at(keyframe_index + 1).getTimestamp() <= current_time - animation_initial_time) {
+				cameraStatus = FREE;
+			}
+			else {
+				if (keyframe_vector.at(keyframe_index + 1).getTimestamp() <= current_time - animation_initial_time) {
+					keyframe_index++;
+				}
+				gps::Keyframe interpolatedKeyframe = keyframe_vector.at(keyframe_index).getInterpolatedKeyframe(keyframe_vector.at(keyframe_index + 1), current_time - animation_initial_time);
+				myCamera = gps::Camera(interpolatedKeyframe.getPostionVec(), interpolatedKeyframe.getTargetVec(), interpolatedKeyframe.getUpVec(), true);
+			}
+			break;
+		case FREE: break;
+		}
+		//lumina
+		sunlightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(sunlightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniform3fv(sunlightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * sunlightRotation)) * sunlightDir));
+		drawLights(myCustomShader);
+		drawReflectiveObjects(reflectionShader, false);
+		drawSkybox();
+		drawObjects(myCustomShader, false);
+		drawTransparentObjects(myCustomShader, false);
+	}
 }
 
 
 
-void cleanup() {
 
+void cleanup() {
+	glDeleteTextures(1, &depthMapTexture);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDeleteFramebuffers(1, &shadowMapFBO);
 	glfwDestroyWindow(glWindow);
 	//close GL context and any other GLFW resources
 	glfwTerminate();
@@ -723,11 +981,17 @@ int main(int argc, const char * argv[]) {
 		glfwTerminate();
 		return 1;
 	}
-	current_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+	
 	initOpenGLState();
+	glCheckError();
 	initObjects();
+	glCheckError();
 	initShaders();
+	glCheckError();
 	initUniforms();
+	current_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+	current_time_aliment = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+	glCheckError();
 
 	while (!glfwWindowShouldClose(glWindow)) {
 		last_time = current_time;
@@ -737,12 +1001,13 @@ int main(int argc, const char * argv[]) {
 		}
 		processMovement();
 		renderScene();
+		glCheckError();
 		glfwPollEvents();
 		glfwSwapBuffers(glWindow);
+		glCheckError();
 	}
 
 	cleanup();
-
 
 	return 0;
 }

@@ -40,6 +40,12 @@
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\depthShader.frag" />
+    <None Include="shaders\depthShader.vert" />
+    <None Include="shaders\reflectionShader.frag" />
+    <None Include="shaders\reflectionShader.vert" />
+    <None Include="shaders\screenQuad.frag" />
+    <None Include="shaders\screenQuad.vert" />
     <None Include="shaders\shaderStart.frag" />
     <None Include="shaders\shaderStart.vert" />
     <None Include="shaders\skyboxShader.frag" />
