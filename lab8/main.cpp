@@ -7,16 +7,15 @@
 //
 
 #if defined (__APPLE__)
-	#define GLFW_INCLUDE_GLCOREARB
-	#define GL_SILENCE_DEPRECATION
+#define GLFW_INCLUDE_GLCOREARB
+#define GL_SILENCE_DEPRECATION
 #else
-	#define GLEW_STATIC
-	#include <GL/glew.h>
+#define GLEW_STATIC
+#include "GL/glew.h"
 #endif
 
 
-
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 
 #include "../../glm/glm.hpp"
 #include "../../glm/gtc/matrix_transform.hpp"
@@ -46,10 +45,10 @@ bool showDepthMap;
 gps::Model3D oras;
 gps::Model3D geamuri;
 gps::Model3D lampite;
-gps::Model3D sticla,sticla1, sticla2;
+gps::Model3D sticla, sticla1, sticla2;
 gps::Model3D doza, doza1, doza2;
 gps::Model3D screenQuad;
-gps::Model3D chifla,top_chifla, tomato, patty, cheese, salad;
+gps::Model3D chifla, top_chifla, tomato, patty, cheese, salad;
 
 enum CameraMode {
 	FREE,
@@ -78,13 +77,32 @@ std::vector<gps::Keyframe> animationKeyframeVector{
 float halfHeight;
 bool firstIngredient = true;
 gps::Model3D chosenIngredient;
+enum Ingredients {
+	BOTTOM_BUN,
+	PATTY,
+	CHEESE,
+	SALAD,
+	TOMATO,
+	TOP_BUN
+};
+Ingredients chosenIngredientCategory;
 
 gps::Keyframe chiflaInitialKeyframe(glm::vec3(10.2196f, 0.56819f, -1.32859f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
-float chiflaHalfHeight = 0.0266f;
+float chiflaHalfHeight = 0.0266f / 2.0f;
+gps::Keyframe topChiflaInitialKeyframe(glm::vec3(10.4721f, 0.58793f, -1.33325f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float topChiflaHalfHeight = 0.042504f / 2.0f;
+gps::Keyframe cheeseInitialKeyframe(glm::vec3(10.224f, 0.510449f, -1.06705f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float cheeseHalfHeight = 0.034896f / 2.0f;
+gps::Keyframe tomatoInitialKeyframe(glm::vec3(10.5454f, 0.51661f, -1.03263f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float tomatoHalfHeight = 0.007413f / 2.0f;
+gps::Keyframe pattyInitialKeyframe(glm::vec3(10.8905f, 0.528678f, -1.08346f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float pattyHalfHeight = 0.025216f / 2.0f;
+gps::Keyframe saladInitialKeyframe(glm::vec3(11.2407f, 0.53003f, -1.21763f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0ms, gps::Keyframe::ANGULAR);
+float saladHalfHeight = 0.024733f / 2.0f;
 
 gps::Keyframe targetKeyframe(glm::vec3(14.0284f, 0.825997f, -0.276667f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 8000ms, gps::Keyframe::ANGULAR);
 
-std::vector<std::pair<gps::Keyframe, gps::Model3D>> objectPersistanceVector;
+std::vector<std::pair<gps::Keyframe, gps::Model3D*>> objectPersistanceVector;
 
 float last_xpos, last_ypos;
 const float PITCH_MULT = 0.0025, YAW_MULT = 0.0025;
@@ -97,7 +115,7 @@ float cameraAcceleration = 0.0002f;
 //animation
 milliseconds last_time;
 milliseconds current_time;
-milliseconds animation_initial_time, animationLengthFromPosition= 1000ms;
+milliseconds animation_initial_time, animationLengthFromPosition = 1000ms;
 milliseconds animation_initial_time_aliment, animationLength_aliment = 1000ms;
 milliseconds last_time_aliment;
 milliseconds current_time_aliment;
@@ -105,17 +123,17 @@ milliseconds current_time_aliment;
 std::vector<gps::Keyframe> keyframe_vector{
 	gps::Keyframe(glm::vec3(0.325578f, 1.409597f, 0.221673f), glm::vec3(1.325069f, 1.429595f, 0.246563f), glm::vec3(-0.019992f, 0.999800f, -0.000498f), 0ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(9.447121f, 1.489379f, 1.582937f), glm::vec3(10.441292f, 1.464381f, 1.478059f), glm::vec3(0.024860f, 0.999688f, -0.002623f), 3000ms, gps::Keyframe::ANGULAR)
-	,gps::Keyframe(glm::vec3(11.430288f, 1.378221f, 1.084252f), glm::vec3(11.326725f, 1.140518f, 0.118450f), glm::vec3 ( - 0.025344f, 0.971338f, -0.236348f), 5000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(11.430288f, 1.378221f, 1.084252f), glm::vec3(11.326725f, 1.140518f, 0.118450f), glm::vec3(-0.025344f, 0.971338f, -0.236348f), 5000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(10.833172f, 1.160686f, 0.264682f), glm::vec3(10.769896f, 0.841377f, -0.680854f), glm::vec3(-0.021321f, 0.947651f, -0.318596f), 8000ms, gps::Keyframe::ANGULAR)
-	,gps::Keyframe(glm::vec3( 12.147247f, 1.160686f, 0.189668f), glm::vec3(12.083710f, 0.853248f, -0.759777f), glm::vec3(-0.020528f, 0.951568f, -0.306753f), 12000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(12.147247f, 1.160686f, 0.189668f), glm::vec3(12.083710f, 0.853248f, -0.759777f), glm::vec3(-0.020528f, 0.951568f, -0.306753f), 12000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(11.465453f, 1.278623f, 0.336850f), glm::vec3(12.429255f, 1.111905f, 0.128789f), glm::vec3(0.162964f, 0.986005f, -0.035180f), 14000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(10.717615f, 1.021175f, 2.176663f), glm::vec3(11.714358f, 1.098597f, 2.154125f), glm::vec3(-0.077402f, 0.996998f, 0.001750f), 16000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(14.996320f, 1.366862f, 2.031034f), glm::vec3(15.940397f, 1.341864f, 1.702259f), glm::vec3(0.023607f, 0.999688f, -0.008221f), 18000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(14.398093f, 1.412532f, 1.342983f), glm::vec3(13.407144f, 1.460014f, 1.468537f), glm::vec3(0.047105f, 0.998872f, -0.005968f), 21000ms, gps::Keyframe::ANGULAR)
-	,gps::Keyframe(glm::vec3(2.747718f, 1.597317f, -1.137050f), glm::vec3( 1.771091f, 1.539848f, -1.344165f), glm::vec3(-0.056218f, 0.998347f, -0.011922f), 23000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(2.747718f, 1.597317f, -1.137050f), glm::vec3(1.771091f, 1.539848f, -1.344165f), glm::vec3(-0.056218f, 0.998347f, -0.011922f), 23000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(-1.410410f, 1.367754f, -1.990653f), glm::vec3(-2.399813f, 1.345255f, -2.134094f), glm::vec3(-0.022266f, 0.999747f, -0.003228f), 25000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(-7.185678f, 1.670901f, 0.191114f), glm::vec3(-8.118288f, 1.571068f, 0.537916f), glm::vec3(-0.093573f, 0.995004f, 0.034796f), 27000ms, gps::Keyframe::ANGULAR)
-	,gps::Keyframe(glm::vec3(-5.620029f, 1.818617f, 1.830073f), glm::vec3(-4.661648f, 1.681549f, 2.080506f), glm::vec3 (0.132615f, 0.990562f, 0.034653f), 29000ms, gps::Keyframe::ANGULAR)
+	,gps::Keyframe(glm::vec3(-5.620029f, 1.818617f, 1.830073f), glm::vec3(-4.661648f, 1.681549f, 2.080506f), glm::vec3(0.132615f, 0.990562f, 0.034653f), 29000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(0.358665f, 1.482273f, 3.800300f), glm::vec3(1.291042f, 1.491704f, 3.438936f), glm::vec3(-0.000000f, 1.000000f, 0.000000f), 31000ms, gps::Keyframe::ANGULAR)
 	,gps::Keyframe(glm::vec3(0.325578f, 1.409597f, 0.221673f), glm::vec3(1.325069f, 1.429595f, 0.246563f), glm::vec3(-0.019992f, 0.999800f, -0.000498f), 33000ms, gps::Keyframe::ANGULAR)
 };
@@ -224,7 +242,7 @@ GLfloat skyboxBoost;
 GLfloat skyboxBoostMoon = 0.005f;
 GLfloat skyboxBoostSun = 1.0f;
 
-GLenum glCheckError_(const char *file, int line) {
+GLenum glCheckError_(const char* file, int line) {
 	GLenum errorCode;
 	while ((errorCode = glGetError()) != GL_NO_ERROR)
 	{
@@ -281,9 +299,9 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 void processMovement()
 {
-	
+
 	//camera movement
-	if (cameraStatus == FREE && 
+	if (cameraStatus == FREE &&
 		(pressedKeys[GLFW_KEY_W] || pressedKeys[GLFW_KEY_S] || pressedKeys[GLFW_KEY_A] || pressedKeys[GLFW_KEY_D]) || pressedKeys[GLFW_KEY_LEFT_SHIFT] || pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
 		cameraSpeed = cameraSpeed > cameraSpeedMax ? cameraSpeedMax : cameraSpeed + cameraAcceleration * (current_time.count() - last_time.count());
 		//printf("Camera speed: %f, time difference: %lld\n", cameraSpeed, (current_time.count() - last_time.count()));
@@ -309,7 +327,7 @@ void processMovement()
 	else {
 		cameraSpeed = 0.0f;
 	}
-	
+
 	if (pressedKeys[GLFW_KEY_0]) {
 		if (cameraStatus != PRESENTATION) {
 			animation_initial_time = std::chrono::duration_cast<milliseconds>(system_clock::now().time_since_epoch());
@@ -331,7 +349,7 @@ void processMovement()
 			cameraStatus = PRESENTATION;
 		}
 	}
-	
+
 	if (pressedKeys[GLFW_KEY_9]) {
 		if (cameraStatus != FREE) {
 			cameraStatus = FREE;
@@ -350,12 +368,12 @@ void processMovement()
 		}
 		k_pressed_last = pressedKeys[GLFW_KEY_K];
 	}
-	
+
 	//sunlight rotation
 	if (pressedKeys[GLFW_KEY_R]) {
 		sunlightAngle += 0.1f;
 	}
-	
+
 	//fog
 	if (pressedKeys[GLFW_KEY_F] != f_pressed_last) {
 		if (pressedKeys[GLFW_KEY_F]) {
@@ -368,7 +386,7 @@ void processMovement()
 		}
 		f_pressed_last = pressedKeys[GLFW_KEY_F];
 	}
-	
+
 	//sunlight or moonlight
 	if (pressedKeys[GLFW_KEY_E] != e_pressed_last) {
 		if (pressedKeys[GLFW_KEY_E]) {
@@ -411,11 +429,123 @@ void processMovement()
 	if (pressedKeys[GLFW_KEY_1] && animationStatus == STOPPED) {
 		animationKeyframeIndex = 0;
 		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, chiflaHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
 		animationKeyframeVector.insert(animationKeyframeVector.begin(), chiflaInitialKeyframe);
 		animationKeyframeVector.push_back(targetKeyframe);
 		chosenIngredient = chifla;
+		chosenIngredientCategory = BOTTOM_BUN;
+		halfHeight = chiflaHalfHeight;
 	}
-	
+
+	if (pressedKeys[GLFW_KEY_2] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, topChiflaHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), topChiflaInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = top_chifla;
+		chosenIngredientCategory = TOP_BUN;
+		halfHeight = topChiflaHalfHeight;
+	}
+
+	if (pressedKeys[GLFW_KEY_3] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, cheeseHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), cheeseInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = cheese;
+		chosenIngredientCategory = CHEESE;
+		halfHeight = cheeseHalfHeight;
+	}
+
+	if (pressedKeys[GLFW_KEY_4] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, tomatoHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), tomatoInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = tomato;
+		chosenIngredientCategory = TOMATO;
+		halfHeight = tomatoHalfHeight;
+	}
+
+	if (pressedKeys[GLFW_KEY_5] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, pattyHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), pattyInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = patty;
+		chosenIngredientCategory = PATTY;
+		halfHeight = pattyHalfHeight;
+	}
+
+	if (pressedKeys[GLFW_KEY_6] && animationStatus == STOPPED) {
+		animationKeyframeIndex = 0;
+		animationStatus = INITIALISING;
+		if (!firstIngredient) {
+			targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, saladHalfHeight, 0.0f),
+				targetKeyframe.getTargetVec(),
+				targetKeyframe.getUpVec(),
+				targetKeyframe.getTimestamp(),
+				targetKeyframe.getInterpolationMode());
+		}
+		else {
+			firstIngredient = false;
+		}
+		animationKeyframeVector.insert(animationKeyframeVector.begin(), saladInitialKeyframe);
+		animationKeyframeVector.push_back(targetKeyframe);
+		chosenIngredient = salad;
+		chosenIngredientCategory = SALAD;
+		halfHeight = saladHalfHeight;
+	}
+
 	//display current camera position
 	if (pressedKeys[GLFW_KEY_Q] != q_pressed_last) {
 		if (pressedKeys[GLFW_KEY_Q]) {
@@ -475,7 +605,7 @@ bool initOpenGLWindow()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
+
 	//window scaling for HiDPI displays
 	glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
@@ -581,11 +711,11 @@ void initUniforms() {
 	view = myCamera.getViewMatrix();
 	viewLoc = glGetUniformLocation(myCustomShader.shaderProgram, "view");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	
-	normalMatrix = glm::mat3(glm::inverseTranspose(view*model));
+
+	normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
 	normalMatrixLoc = glGetUniformLocation(myCustomShader.shaderProgram, "normalMatrix");
 	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-	
+
 	projection = glm::perspective(glm::radians(45.0f), (float)retina_width / (float)retina_height, 0.1f, 1000.0f);
 	projectionLoc = glGetUniformLocation(myCustomShader.shaderProgram, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -611,7 +741,7 @@ void initUniforms() {
 	sunlightStrength = sunlightStrengthSun;
 	sunlightStrengthLoc = glGetUniformLocation(myCustomShader.shaderProgram, "sunlightStrength");
 	glUniform1f(sunlightStrengthLoc, sunlightStrength);
-	
+
 	//flat
 	flat = 0;
 	flatLoc = glGetUniformLocation(myCustomShader.shaderProgram, "flatness");
@@ -697,7 +827,7 @@ void drawObjects(gps::Shader shader, bool depthPass) {
 
 
 	if (geamurilights_on && !depthPass) {
-		glUniform3fv(ambientColorLoc,1,  glm::value_ptr(ambientColorWindow));
+		glUniform3fv(ambientColorLoc, 1, glm::value_ptr(ambientColorWindow));
 		glUniform1f(ambientStrengthLoc, ambientStrengthLights);
 		geamuri.Draw(shader);
 		glUniform3fv(ambientColorLoc, 1, glm::value_ptr(ambientColorDisabled));
@@ -718,27 +848,22 @@ void drawObjects(gps::Shader shader, bool depthPass) {
 		lampite.Draw(shader);
 	}
 
-	glCheckError();
 
-	chifla.Draw(shader);
-
-	glCheckError();
-
-	//if (!depthPass) {
-	//	for (std::pair<gps::Keyframe, gps::Model3D> object : objectPersistanceVector) {
-	//		glCheckError();
-	//		model = glm::translate(glm::mat4(1.0f), object.first.getPostionVec());
-	//		glCheckError();
-	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	//		glCheckError();
-	//		chifla.Draw(shader);
-	//		glCheckError();
-	//		model = glm::mat4(1.0f);
-	//		glCheckError();
-	//		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	//		glCheckError();
-	//	}
-	//}
+	if (!depthPass) {
+		for (std::pair<gps::Keyframe, gps::Model3D*> object : objectPersistanceVector) {
+			glCheckError();
+			model = glm::translate(glm::mat4(1.0f), object.first.getPostionVec());
+			glCheckError();
+			glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			glCheckError();
+			object.second->Draw(shader);
+			glCheckError();
+			model = glm::mat4(1.0f);
+			glCheckError();
+			glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			glCheckError();
+		}
+	}
 }
 
 glm::mat4 rotateAroundPoint(glm::mat4 initialMatrix, glm::vec3 point, float angle, glm::vec3 rotationAxis) {
@@ -823,16 +948,39 @@ void computeAnimation(gps::Shader shader) {
 
 	if (animationKeyframeIndex == animationKeyframeVector.size() - 2 && animationKeyframeVector.at(animationKeyframeIndex + 1).getTimestamp() <= current_time - animationInitialTime) {
 		animationStatus = STOPPED;
-		objectPersistanceVector.push_back(std::pair<gps::Keyframe, gps::Model3D>(animationKeyframeVector.at(animationKeyframeVector.size() - 1), chosenIngredient));
+		gps::Model3D* pci = new gps::Model3D;
+		switch (chosenIngredientCategory) {
+		case BOTTOM_BUN:
+			pci->LoadModel("objects/bottom_bun.obj");
+			break;
+		case TOP_BUN:
+			pci->LoadModel("objects/top_bun.obj");
+			break;
+		case PATTY:
+			pci->LoadModel("objects/patty.obj");
+			break;
+		case CHEESE:
+			pci->LoadModel("objects/cheese.obj");
+			break;
+		case SALAD:
+			pci->LoadModel("objects/salad.obj");
+			break;
+		case TOMATO:
+			pci->LoadModel("objects/tomato.obj");
+			break;
+		}
+		//objectPersistanceVector.
+		objectPersistanceVector.push_back(std::pair<gps::Keyframe, gps::Model3D*>(animationKeyframeVector.at(animationKeyframeVector.size() - 1), pci));
 		animationKeyframeVector.erase(animationKeyframeVector.begin());
 		animationKeyframeVector.erase(animationKeyframeVector.end() - 1);
+		targetKeyframe = gps::Keyframe(targetKeyframe.getPostionVec() + glm::vec3(0.0f, halfHeight, 0.0f), targetKeyframe.getTargetVec(), targetKeyframe.getUpVec(), targetKeyframe.getTimestamp(), targetKeyframe.getInterpolationMode());
 	}
 	else {
 		if (animationKeyframeVector.at(animationKeyframeIndex + 1).getTimestamp() <= current_time - animationInitialTime) {
 			animationKeyframeIndex++;
 		}
 		gps::Keyframe interpolatedKeyframe = animationKeyframeVector.at(animationKeyframeIndex).getInterpolatedKeyframe(animationKeyframeVector.at(animationKeyframeIndex + 1), current_time - animationInitialTime);
-		
+
 		view = myCamera.getViewMatrix();
 		model = glm::translate(glm::mat4(1.0f), interpolatedKeyframe.getPostionVec());
 		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -934,10 +1082,10 @@ void renderScene() {
 		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
 		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 		glCheckError();
-		if(animationStatus != STOPPED){
+		if (animationStatus != STOPPED) {
 			computeAnimation(myCustomShader);
 		}
-		
+
 		switch (cameraStatus) {
 		case PRESENTATION:
 			if (keyframe_index == keyframe_vector.size() - 2 && keyframe_vector.at(keyframe_index + 1).getTimestamp() <= current_time - animation_initial_time) {
@@ -976,12 +1124,12 @@ void cleanup() {
 	glfwTerminate();
 }
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[]) {
 	if (!initOpenGLWindow()) {
 		glfwTerminate();
 		return 1;
 	}
-	
+
 	initOpenGLState();
 	glCheckError();
 	initObjects();
